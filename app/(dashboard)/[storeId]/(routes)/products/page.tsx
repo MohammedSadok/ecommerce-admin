@@ -3,49 +3,47 @@ import { format } from "date-fns";
 import prismadb from "@/lib/prismadb";
 import { formatter } from "@/lib/utils";
 
-import { OrderColumn } from "./components/Columns";
-import { OrderClient } from "./components/Client";
+import { ProductsClient } from "./components/Client";
+import { ProductColumn } from "./components/Columns";
 
-const OrdersPage = async ({ params }: { params: { storeId: string } }) => {
-  const orders = await prismadb.order.findMany({
+const ProductsPage = async ({
+  params
+}: {
+  params: { storeId: string }
+}) => {
+  const products = await prismadb.product.findMany({
     where: {
-      storeId: params.storeId,
+      storeId: params.storeId
     },
     include: {
-      orderItems: {
-        include: {
-          product: true,
-        },
-      },
+      category: true,
+      size: true,
+      color: true,
     },
     orderBy: {
-      createdAt: "desc",
-    },
+      createdAt: 'desc'
+    }
   });
 
-  const formattedOrders: OrderColumn[] = orders.map((item) => ({
+  const formattedProducts: ProductColumn[] = products.map((item) => ({
     id: item.id,
-    phone: item.phone,
-    address: item.address,
-    products: item.orderItems
-      .map((orderItem) => orderItem.product.name)
-      .join(", "),
-    totalPrice: formatter.format(
-      item.orderItems.reduce((total, item) => {
-        return total + Number(item.product.price);
-      }, 0)
-    ),
-    isPaid: item.isPaid,
-    createdAt: format(item.createdAt, "MMMM do, yyyy"),
+    name: item.name,
+    isFeatured: item.isFeatured,
+    isArchived: item.isArchived,
+    price: formatter.format(item.price.toNumber()),
+    category: item.category.name,
+    size: item.size.name,
+    color: item.color.value,
+    createdAt: format(item.createdAt, 'MMMM do, yyyy'),
   }));
 
   return (
     <div className="flex-col">
       <div className="flex-1 space-y-4 p-8 pt-6">
-        <OrderClient data={formattedOrders} />
+        <ProductsClient data={formattedProducts} />
       </div>
     </div>
   );
 };
 
-export default OrdersPage;
+export default ProductsPage;
